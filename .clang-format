@@ -1,0 +1,9 @@
+Language: Cpp
+BasedOnStyle: Google
+BinPackArguments: false
+BinPackParameters: false
+AlignAfterOpenBracket: BlockIndent
+PenaltyBreakBeforeFirstCallParameter: 100
+IndentWidth: 4
+PointerAlignment: Right
+SpaceBeforeRangeBasedForLoopColon: false
