@@ -48,10 +48,6 @@ void shuffleInline(uint16_t array[], seededRandom *rand) {
     }
 }
 
-__host__ __device__
-static Byte bitGet(const Byte* bytes, const size_t idx){
-    return (bytes[idx >> 3] >> (idx & 0x7)) & 1;
-}
 
 __device__
 void setEntryValidity(ShuffleCacheEntry* entry, const Byte* validityArray) {

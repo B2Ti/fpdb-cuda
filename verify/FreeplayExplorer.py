@@ -201,7 +201,7 @@ def process_rounds(seed:int, start:int, end:int, printall:bool, printtotal:bool)
                 continue
             score = np.float32(get_score(obj, start) if obj['score'] == 0 else obj['score'])
             if score > budget: continue
-            if i == 497:
+            if i == 470:
                 pass
             bloon:str = obj["group"]["bloon"]
             count:int = obj["group"]["count"]
@@ -261,7 +261,7 @@ def err_test():
             max_error_percent = percent
             print(f"error: {max_error:.10f}, max % = {percent:.10f}, seed ({seed})")
 def main() -> None:
-    process_rounds(0, 772, 772, False, False)
+    process_rounds(154323, 501, 501, False, False)
     parser = argparse.ArgumentParser()
     parser.add_argument("seed", type=int)
     parser.add_argument("start", type=int)

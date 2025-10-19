@@ -1,11 +1,7 @@
-// nvcc -gencode=arch=compute_86,code=sm_86 -I include -I
-// build/_deps/zstd-src/lib src/* -o main.out -L build/_deps/zstd-build/lib
-// -lzstd -O2
-#define BITS_ARRAY_H_IMPL
+// cant be bothered to make timing.c how nvcc likes it
+// cc timing/timing.c -I include -c -o src/timing.o
+// nvcc -gencode=arch=compute_86,code=sm_86 -I include -I build/_deps/zstd-src/lib src/* -o main.out -L build/_deps/zstd-build/lib -lzstd -O2
 #include <bits_array.hpp>
-__host__ __device__ Byte bitGet(const Byte *bytes, const size_t idx) {
-    return (bytes[idx >> 3] >> (idx & 0x7)) & 1;
-}
 #include <assert.h>
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
@@ -43,24 +39,6 @@ __device__ const uint32_t bloonCash[18] =
 __device__ static inline uint32_t getCash50(int32_t bloonType) {
     return bloonCash[bloonType >> 3];
 }
-
-// template<typename T>
-// static T *cuda_new(size_t n, bool zero_init = false) {
-//     cudaError_t err;
-//     T *ptr;
-//     err = cudaMalloc(&ptr, n * sizeof(T));
-//     if (err != cudaSuccess) {
-//         throw std::runtime_error("cudaMalloc");
-//     }
-//     if (zero_init) {
-//         err = cudaMemset(ptr, 0, n * sizeof(T));
-//         if (err != cudaSuccess) {
-//             cudaFree(ptr);
-//             throw std::runtime_error("cudaMalloc");
-//         }
-//     }
-//     return ptr;
-// }
 
 class SearchSetup {
    public:
@@ -127,9 +105,6 @@ static void searchSeeds(
         float budget = original_budget;
 
         if (round >= 511) {
-            if (round == 772) {
-                std::printf("this");
-            }
             for (uint16_t i = 0; i < MAX_COUNT; ++i) {
                 uint32_t groupIndex = groupIdxs->r511Groups[i];
 
@@ -149,10 +124,10 @@ static void searchSeeds(
                     if (group->type == BAD_TYPE) total_num_bads += group->count;
                 }
             }
-            if (round == 772) {
-                std::printf("%d, %d\n", total_num_bads, total_num_fbads);
-            }
         } else {
+            if (round == 501) {
+                std::printf("this");
+            }
             for (uint16_t i = 0; i < NUM_GROUPS; ++i) {
                 uint32_t groupIndex = groupIdxs->indexes[i];
                 if (!bitGet(group_validity, offset + groupIndex)) {
@@ -162,7 +137,7 @@ static void searchSeeds(
                 const Group _group = getGroup(groupIndex);
                 const Group *group = &_group;
 
-                if (group->score < budget) {
+                if (group->score <= budget) {
                     budget -= group->score;
                     total_cash += cash[group->type >> 3] * group->count;
 
@@ -170,6 +145,9 @@ static void searchSeeds(
                         total_num_fbads += group->count;
                     if (group->type == BAD_TYPE) total_num_bads += group->count;
                 }
+            }
+            if (round == 501) {
+                std::printf("%d, %d\n", total_num_bads, total_num_fbads);
             }
         }
     }
@@ -221,7 +199,7 @@ __global__ static void searchSeedsKernel(
 
                 const BoundlessGroup *group = &groups[groupIndex];
 
-                if (group->score < budget) {
+                if (group->score <= budget) {
                     budget -= group->score;
                     totalCash += getCash50(group->type) * group->count;
 
@@ -380,7 +358,9 @@ static void searchSeedsGetResults(SearchSetup &setup) {
 }
 
 static void searchSeedsAsync() {
-    const int n_files = 4;
+    //keep in mind that each file needs about 700mb ram to store the results (at 100k seeds/kernel)
+    //for me 5 files is required to stay gpu capped w/ the other settings that run the fastest (100k seeds/kernel, 320 threads/block)
+    const int n_files = 5;
     if (ensureDirectoryExists("database/")) {
         throw std::runtime_error("ensureDirectoryExists failed");
     }
@@ -470,7 +450,7 @@ void test() {
         auto shuffles = std::unique_ptr<ShuffleCache, ShuffleDeleter>(
             cache, ShuffleDeleter{}
         );
-        err = cu_fillCache(shuffles.get(), 2000, 0, group_validity.get());
+        err = cu_fillCache(shuffles.get(), 2000, 154000, group_validity.get());
         if (err != cudaSuccess) {
             throw std::runtime_error("cu_fillCache");
         }
@@ -481,7 +461,7 @@ void test() {
             cudaMemcpyDeviceToHost
         );
     }
-    searchSeeds(va, &shuffle_cache, 0, new SeedResults[2000]);
+    searchSeeds(va, &shuffle_cache, 323, new SeedResults[2000]);
 }
 
 int main() {

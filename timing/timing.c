@@ -1,5 +1,5 @@
 #include <stdint.h>
-#include "timing.h"
+#include <timing.h>
 
 
 #ifdef _WIN32

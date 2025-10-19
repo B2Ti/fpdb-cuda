@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <compressedFile.hpp>
-#include <err_io.h>
 #include <stdexcept>
 #include <system_error>
 
