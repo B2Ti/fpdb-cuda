@@ -90,8 +90,8 @@ class seeded_random:
         raise TypeError("min and max must be both ints or both None")
     def _get_next_seed(self):
         self.seed = (self.seed * 0x41a7) % 0x7FFFFFFF
-        value = self.seed / np.float32(0x7FFFFFFE)
-        return float(value)
+        value = np.float32(self.seed) / np.float32(0x7FFFFFFE)
+        return value
     def _get_next_seed_bounded(self, min_:int, max_:int):
         if min_ == max_:
             return max_
@@ -173,7 +173,7 @@ def process_rounds(seed:int, start:int, end:int, printall:bool, printtotal:bool)
         test_groups = list(range(529))
         shuffle_rand_in_place(test_groups, rand)
         if start > 1:
-            mult = np.float32(1.5) - np.float32(rand.get_next_seed())
+            mult = 1.5 - rand.get_next_seed()
             if seed == 101 and start == 160:
                 print(mult)
             budget = get_budget(start) * mult
